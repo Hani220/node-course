@@ -1,7 +1,7 @@
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 
-dotenv.config({ path: './config.env' });
-const app = require('./app.js');
+dotenv.config({ path: "./config.env" });
+const app = require("./app.js");
 // console.log(app.get('env'));
 // console.log(process.env);
 //4) START SERVER
