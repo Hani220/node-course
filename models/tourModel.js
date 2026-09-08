@@ -1,3 +1,4 @@
+const slugify = require("slugify");
 const mongoose = require("mongoose");
 
 const tourSchema = new mongoose.Schema(
@@ -8,6 +9,7 @@ const tourSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    slug: String,
     duration: {
       type: Number,
       required: [true, "A tour must have a duration"],
@@ -53,6 +55,10 @@ const tourSchema = new mongoose.Schema(
       select: false,
     },
     startDates: [Date],
+    secretTour: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -62,6 +68,34 @@ const tourSchema = new mongoose.Schema(
 
 tourSchema.virtual("durationWeeks").get(function () {
   return this.duration / 7;
+});
+tourSchema.pre("save", function () {
+  this.slug = slugify(this.name, { lower: true });
+});
+// // eslint-disable-next-line prefer-arrow-callback
+// tourSchema.pre("save", function () {
+//   // eslint-disable-next-line no-console
+//   console.log("Will save document...");
+// });
+// // eslint-disable-next-line prefer-arrow-callback
+// tourSchema.post("save", function (doc) {
+//   // eslint-disable-next-line no-console
+//   console.log(doc);
+// });
+//Query Middelware
+tourSchema.pre(/^find/, function () {
+  this.find({ secretTour: { $ne: true } });
+  this.start = Date.now();
+});
+
+tourSchema.post(/^find/, function (docs) {
+  console.log(`query took!${Date.now() - this.start} in milliseconds`);
+});
+
+//ِAGGREGATION MIDDELWARE
+tourSchema.pre("aggregate", function () {
+  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  console.log(this);
 });
 const Tour = mongoose.model("Tour", tourSchema);
 
