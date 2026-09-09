@@ -7,13 +7,16 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "start:dev": "cross-env NODE_ENV=development nodemon server.js",
+    "start": "cross-env NODE_ENV=development nodemon server.js",
     "start:prod": "cross-env NODE_ENV=production node server.js"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^4.22.2",
-    "morgan": "^1.11.0"
+    "mongoose": "^9.9.5",
+    "morgan": "^1.11.0",
+    "slugify": "^1.6.9",
+    "validator": "^13.15.35"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
