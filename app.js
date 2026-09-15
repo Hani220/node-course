@@ -31,4 +31,5 @@ app.all("*", (req, res, next) => {
 
 // ERROR HANDLING MIDDLEWARE
 app.use(globalErrorHandler);
+
 module.exports = app;
