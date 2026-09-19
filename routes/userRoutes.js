@@ -7,9 +7,14 @@ const Router = express.Router();
 Router.post("/signUp", authController.signUp);
 Router.post("/login", authController.login);
 
+Router.post("/forgotPassword", authController.forgotPassword);
+// Router.post("/resetPassword", authController.resetPassword);
+
+Router.use(authController.protect);
+
 Router.route("/")
   .get(userController.getAllUsers)
-  .post(userController.createUser);
+  .post(authController.restrictTo("admin"), userController.createUser);
 
 Router.route("/:id")
   .get(userController.getUser)
