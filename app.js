@@ -6,6 +6,8 @@ const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
+const hpp = require("hpp");
+
 const AppError = require("./utils/appError.js");
 const globalErrorHandler = require("./middleware/errorController.js");
 const tourRouter = require("./routes/tourRoutes.js");
@@ -41,6 +43,20 @@ app.use(express.static(`${__dirname}/public`));
 
 //Data Sanitization against xss
 app.use(xss());
+
+// prevent parameter pollution
+app.use(
+  hpp({
+    whitelist: [
+      "duration",
+      "ratingsAverage",
+      "ratingsQuantity",
+      "maxGroupSize",
+      "difficulty",
+      "price",
+    ],
+  }),
+);
 
 //Test Middelware
 app.use((req, res, next) => {
