@@ -1,5 +1,6 @@
 const slugify = require("slugify");
 const mongoose = require("mongoose");
+// const User = require("./userModel");
 // const validator = require("validator");
 const tourSchema = new mongoose.Schema(
   {
@@ -100,6 +101,12 @@ const tourSchema = new mongoose.Schema(
         day: Number,
       },
     ],
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
@@ -113,6 +120,13 @@ tourSchema.virtual("durationWeeks").get(function () {
 tourSchema.pre("save", function () {
   this.slug = slugify(this.name, { lower: true });
 });
+
+// Embedding
+// tourSchema.pre("save", async function () {
+//   const guidesPromises = this.guides.map(async (id) => await User.findById(id));
+//   this.guides = await Promise.all(guidesPromises);
+// });
+
 //Query Middelware
 tourSchema.pre(/^find/, function () {
   this.find({ secretTour: { $ne: true } });
