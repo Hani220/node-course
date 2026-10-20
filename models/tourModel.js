@@ -133,6 +133,13 @@ tourSchema.pre(/^find/, function () {
   this.start = Date.now();
 });
 
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "guides",
+    select: "-__v -passwordChangedAt",
+  });
+});
+
 tourSchema.post(/^find/, function () {
   // eslint-disable-next-line no-console
   console.log(`query took!${Date.now() - this.start} in milliseconds`);
