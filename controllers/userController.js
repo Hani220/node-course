@@ -11,16 +11,6 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
-  res.status(200).json({
-    status: "success",
-    result: users.length,
-    data: {
-      users,
-    },
-  });
-});
 exports.createUser = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
@@ -34,20 +24,6 @@ exports.createUser = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       user: newUser,
-    },
-  });
-});
-
-exports.getUser = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
-  if (!user) {
-    return next(new AppError("No user found with that ID", 404));
-  }
-
-  res.status(200).json({
-    status: "success",
-    data: {
-      user,
     },
   });
 });
@@ -105,4 +81,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
+
+exports.getAllUsers = factory.getAll(User);
+exports.getUser = factory.getOne(User);
 exports.deleteUser = factory.deleteOne(User);
