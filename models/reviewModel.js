@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 //review -rating - createdAt-tourRef -userRef  => parent
+const Tour = require("./tourModel");
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -34,7 +35,7 @@ const reviewSchema = new mongoose.Schema(
   },
 );
 
-reviewSchema.pre(/^find/, function (next) {
+reviewSchema.pre(/^find/, function () {
   // this.populate({
   //   path: "user",
   //   select: "name photo",
@@ -46,6 +47,46 @@ reviewSchema.pre(/^find/, function (next) {
     path: "user",
     select: "name photo",
   });
+});
+
+reviewSchema.statics.clacAverageRatings = async function (tourId) {
+  console.log(tourId);
+  const stats = await this.aggregate([
+    {
+      $match: { tour: tourId },
+    },
+    {
+      $group: {
+        _id: "$tour",
+        nRating: { $sum: 1 },
+        avgRating: { $avg: "$rating" },
+      },
+    },
+  ]);
+  if (stats.length > 0) {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsAverage: stats[0].nRating,
+      ratingsQuantity: stats[0].avgRating,
+    });
+  } else {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsAverage: 4.5,
+      ratingsQuantity: 0,
+    });
+  }
+};
+
+reviewSchema.post("save", function () {
+  this.constructor.clacAverageRatings(this.tour);
+});
+
+reviewSchema.pre(/^findOneAnd/, async function () {
+  this.review = await this.model.findOne(this.getQuery());
+});
+
+reviewSchema.post(/^findOneAnd/, async function () {
+  //  this.review = await this.findOne(); does not work here ,cuz query already has been executed
+  await this.model.clacAverageRatings(this.review.tour);
 });
 
 const Review = mongoose.model("Review", reviewSchema);
