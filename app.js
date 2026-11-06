@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 
 const morgan = require("morgan");
@@ -12,9 +13,18 @@ const AppError = require("./utils/appError.js");
 const globalErrorHandler = require("./middleware/errorController.js");
 const tourRouter = require("./routes/tourRoutes.js");
 const userRouter = require("./routes/userRoutes.js");
+const reviewRouter = require("./routes/")
 
 const app = express();
+
+app.set("view engine", "pug");
+
+app.set("views", path.join(__dirname, "views"));
+
 //Global Middlwares
+// Serve static files after moving the public folder out of starter.
+app.use(express.static(path.join(__dirname, "public")));
+
 //Set security http headers
 app.use(helmet());
 
@@ -37,9 +47,6 @@ app.use(express.json({ limit: "10Kb" }));
 
 // Data Sanitization against NOSQL Query Injection
 app.use(mongoSanitize());
-
-// Serve static files after moving the public folder out of starter.
-app.use(express.static(`${__dirname}/public`));
 
 //Data Sanitization against xss
 app.use(xss());
@@ -68,6 +75,7 @@ app.use((req, res, next) => {
 //3) ROUTES
 app.use("/api/v1/tours", tourRouter);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/users", reviewRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`cant find ${req.originalUrl} on this server!`, 404));
