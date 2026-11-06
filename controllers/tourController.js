@@ -4,6 +4,7 @@ const Tour = require("../models/tourModel.js");
 // );
 const catchAsync = require("../utils/catchAsync.js");
 const factory = require("./handlerFactory.js");
+const AppError = require("../utils/appError.js");
 
 exports.getAllTours = factory.getAll(Tour);
 exports.getTour = factory.getOne(Tour, { path: "reviews" });
@@ -17,7 +18,6 @@ exports.ailasTopTours = (req, res, next) => {
   req.query.fields = "name,price,ratingsAverage,summary,difficulty";
   next();
 };
-
 
 // exports.deleteTour = catchAsync(async (req, res, next) => {
 //   const tour = await Tour.findByIdAndDelete(req.params.id);
@@ -98,6 +98,55 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       plan,
+    },
+  });
+});
+
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(",").map(Number);
+  const distanceInUnits = Number(distance);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return next(
+      new AppError(
+        "Please provide valid latitude and longitude in the format lat,lng",
+        400,
+      ),
+    );
+  }
+
+  if (!Number.isFinite(distanceInUnits) || distanceInUnits <= 0) {
+    return next(new AppError("Distance must be a positive number", 400));
+  }
+
+  if (!["mi", "km"].includes(unit)) {
+    return next(new AppError("Unit must be either mi or km", 400));
+  }
+
+  const radius =
+    unit === "mi" ? distanceInUnits / 3963.2 : distanceInUnits / 6378.1;
+
+  const tours = await Tour.find({
+    startLocation: {
+      $geoWithin: {
+        $centerSphere: [[lng, lat], radius],
+      },
+    },
+  });
+
+  res.status(200).json({
+    status: "success",
+    results: tours.length,
+    data: {
+      data: tours,
     },
   });
 });
