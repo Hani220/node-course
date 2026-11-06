@@ -160,11 +160,18 @@ tourSchema.post(/^find/, function () {
 });
 
 //ِAGGREGATION MIDDELWARE
-tourSchema.pre("aggregate", function () {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
-  // eslint-disable-next-line no-console
-  console.log(this);
-});
+// tourSchema.pre("aggregate", function () {
+//   const pipeline = this.pipeline();
+//   const secretTourMatch = { $match: { secretTour: { $ne: true } } };
+
+//   if (pipeline[0]?.$geoNear) {
+//     pipeline.splice(1, 0, secretTourMatch);
+//   } else {
+//     pipeline.unshift(secretTourMatch);
+//   }
+//   // eslint-disable-next-line no-console
+//   console.log(this);
+// });
 const Tour = mongoose.model("Tour", tourSchema);
 
 module.exports = Tour;

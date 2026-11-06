@@ -150,3 +150,55 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(",").map(Number);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return next(
+      new AppError(
+        "Please provide valid latitude and longitude in the format lat,lng",
+        400,
+      ),
+    );
+  }
+
+  if (!["mi", "km"].includes(unit)) {
+    return next(new AppError("Unit must be either mi or km", 400));
+  }
+  const multiplier = unit === "mi" ? 0.000621371 : 0.001;
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [lng * 1, lat * 1],
+        },
+        distanceField: "distance",
+        distanceMultiplier: multiplier,
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        distance: 1,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      data: distances,
+    },
+  });
+});
