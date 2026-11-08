@@ -14,6 +14,7 @@ const globalErrorHandler = require("./middleware/errorController.js");
 const tourRouter = require("./routes/tourRoutes.js");
 const userRouter = require("./routes/userRoutes.js");
 const reviewRouter = require("./routes/reviewRoutes.js");
+const viewRouter = require("./routes/viewRoutes.js");
 
 const app = express();
 
@@ -73,10 +74,8 @@ app.use((req, res, next) => {
 });
 //2) ROUTE HANDLERS
 //3) ROUTES
-app.get("/", (req, res) => {
-  res.status(200).render("base");
-});
 
+app.use("/", viewRouter);
 app.use("/api/v1/tours", tourRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/reviews", reviewRouter);
