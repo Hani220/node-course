@@ -5,11 +5,10 @@ const catchAsync = require("../utils/catchAsync.js");
 const AppError = require("../utils/appError.js");
 const sendEmail = require("../utils/email.js");
 
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+const signToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
-};
 
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
@@ -59,6 +58,16 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+exports.logout = (req, res) => {
+  res.cookie("jwt", "loggedOut", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  res.status(200).json({ status: "success" });
+};
+
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
   //1) getting the token and check if its there
@@ -78,7 +87,14 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   //2) verify the token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return next(
+      new AppError("Invalid or expired token. Please log in again.", 401),
+    );
+  }
 
   //3) check if user still exists
   const currentUser = await User.findById(decoded.id);
@@ -100,26 +116,26 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 // only for rendered pages
 exports.IsLogggedIn = catchAsync(async (req, res, next) => {
-  if (req.cookies.jwt) {
+  //1) No cookie, or the placeholder set by logout -> just render as logged out
+  if (!req.cookies.jwt || req.cookies.jwt === "loggedOut") return next();
+
+  try {
     //2) verify the token
     const decoded = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET);
 
     //3) check if user still exists
     const currentUser = await User.findById(decoded.id);
-    if (!currentUser) {
-      return next(
-        new AppError("The user belonging to this token no longer exists.", 401),
-      );
-    }
+    if (!currentUser) return next();
+
     //check if user changed password before/after token
-    if (currentUser.passwordChangedAfter(decoded.iat)) {
-      return next();
-    }
+    if (currentUser.passwordChangedAfter(decoded.iat)) return next();
+
     //4) There is A logged in user
     res.locals.user = currentUser;
-    return next();
+  } catch (err) {
+    // Invalid/expired cookie: treat as logged out instead of throwing
   }
-  next();
+  return next();
 });
 
 exports.restrictTo =

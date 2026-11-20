@@ -1,6 +1,6 @@
 /*eslint-disable  */
 import "@babel/polyfill";
-import { login } from "./login";
+import { login, logout } from "./login";
 import { displayMap } from "./mapbox";
 
 const mapElement = document.getElementById("map");
@@ -28,4 +28,21 @@ if (form) {
 
     login(email, password);
   });
+}
+
+const setupLogout = () => {
+  const logoutButton = document.querySelector(".nav__el--logout");
+
+  if (!logoutButton) return;
+
+  logoutButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    logout();
+  });
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupLogout);
+} else {
+  setupLogout();
 }

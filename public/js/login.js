@@ -20,3 +20,20 @@ export const login = async (email, password) => {
     showAlert("error", message);
   }
 };
+
+export const logout = async () => {
+  try {
+    await axios({
+      method: "GET",
+      url: "/api/v1/users/logout",
+    });
+
+    window.location.assign("/");
+  } catch (err) {
+    const message =
+      (err.response && err.response.data && err.response.data.message) ||
+      "Logout failed. Please try again.";
+
+    showAlert("error", message);
+  }
+};
