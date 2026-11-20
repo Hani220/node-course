@@ -1,12 +1,11 @@
 /* global document, mapboxgl */
 
-const mapElement = document.getElementById("map");
+export const displayMap = (locations) => {
+  const mapElement = document.getElementById("map");
+  if (!mapElement) return;
 
-if (mapElement) {
-  const locations = JSON.parse(mapElement.dataset.locations);
   const accessToken = mapElement.dataset.mapboxToken;
-
-  if (!accessToken || accessToken === "your_mapbox_public_token") {
+  if (!accessToken) {
     throw new Error("MAPBOX_ACCESS_TOKEN is missing or invalid.");
   }
 
@@ -45,4 +44,4 @@ if (mapElement) {
     padding: { top: 100, bottom: 100, left: 100, right: 100 },
     maxZoom: 12,
   });
-}
+};

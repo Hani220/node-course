@@ -92,28 +92,91 @@ body {
   background-color: #e0e0e0;
 }
 
-.alert {
+.alert-container {
   position: fixed;
-  top: 0;
+  top: 2.4rem;
   left: 50%;
-  -webkit-transform: translateX(-50%);
   transform: translateX(-50%);
   z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: min(52rem, calc(100vw - 4.8rem));
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
   color: #fff;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 400;
-  text-align: center;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  padding: 1.6rem 15rem;
-  -webkit-box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.25);
-  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.25);
+  line-height: 1.4;
+  padding: 1.4rem 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.8rem;
+  box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.18);
+  -webkit-backdrop-filter: blur(0.8rem);
+  backdrop-filter: blur(0.8rem);
+  animation: alert-in 180ms ease-out;
 }
+
+.alert--closing {
+  animation: alert-out 180ms ease-in forwards;
+}
+
+.alert__close {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 2.2rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 150ms ease;
+}
+
+.alert__close:hover,
+.alert__close:focus-visible {
+  opacity: 1;
+}
+
 .alert--success {
-  background-color: #20bf6b;
+  background-color: rgba(32, 191, 107, 0.95);
 }
+
 .alert--error {
-  background-color: #eb4d4b;
+  background-color: rgba(235, 77, 75, 0.95);
+}
+
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.8rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes alert-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.8rem) scale(0.98);
+  }
+}
+
+@media (max-width: 600px) {
+  .alert-container {
+    top: 1.2rem;
+    left: 1.2rem;
+    transform: none;
+    width: calc(100vw - 2.4rem);
+  }
 }
 
 .heading-secondary {
