@@ -1,0 +1,12 @@
+extends base
+block content
+  main.main.error-main
+    .error
+      span.error__code= statusCode || 404
+      h2.heading-secondary.heading-secondary--error
+        if statusCode === 404
+          | Page not found
+        else
+          | Something went wrong
+      p.error__msg= msg || 'Sorry, we could not complete your request.'
+      a.btn.btn--green(href='/overview') Back to overview

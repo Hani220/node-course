@@ -6,8 +6,7 @@ const handleCastErrorDB = (err) => {
 };
 
 const handleDuplicateFieldsDB = (err) => {
-  const field = Object.keys(err.keyValue || {})[0];
-  const value = err.keyValue ? err.keyValue[field] : undefined;
+  const value = Object.values(err.keyValue || {})[0];
 
   const message = `Duplicate field value: ${value}. Please use another value!`;
 
@@ -22,44 +21,73 @@ const handleValidationErrorDB = (err) => {
   return new AppError(message, 400);
 };
 const handleJWTError = () =>
-  new AppError("Invalid token.  please login again!", 401);
+  new AppError("Invalid token. Please log in again!", 401);
 
 const handleJWTExpiredError = () =>
   new AppError("Your token has expired. Please login again!", 401);
 
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack,
-  });
-};
-
-const sendErrorProduction = (err, res) => {
-  //operational,trusted error : send message to the client
-  if (err.isOperational) {
+const sendErrorDev = (err, req, res) => {
+  //API
+  if (req.originalUrl.startsWith("/api")) {
     res.status(err.statusCode).json({
       status: err.status,
+      error: err,
       message: err.message,
+      stack: err.stack,
     });
-    //programming or other unknown error : dont leak error details to the client
+    //rendered Website
   } else {
-    //1)log the error
-    console.log("ERROR", err);
-    res.status(500).json({
-      status: "error",
-      message: "somthing went wrong",
+    res.status(err.statusCode).render("error", {
+      title: "Something Went Wrong!",
+      msg: err.message,
+      statusCode: err.statusCode,
     });
   }
 };
 
+const sendErrorProduction = (err, req, res) => {
+  //operational,trusted error : send message to the client
+  if (err.isOperational) {
+    if (req.originalUrl.startsWith("/api")) {
+      res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    } else {
+      res.status(err.statusCode).render("error", {
+        title: "Something Went Wrong!",
+        msg: err.message,
+        statusCode: err.statusCode,
+      });
+    }
+    //programming or other unknown error : dont leak error details to the client
+  } else {
+    //1)log the error
+    process.stderr.write(`ERROR ${err.stack || err.message || err}\n`);
+    if (req.originalUrl.startsWith("/api")) {
+      res.status(500).json({
+        status: "error",
+        message: "somthing went wrong",
+      });
+    } else {
+      res.status(500).render("error", {
+        title: "Something Went Wrong!",
+        msg: "Sorry, something went wrong. Please try again later.",
+        statusCode: 500,
+      });
+    }
+  }
+};
+
 const errorController = (err, req, res, next) => {
+  // Keep the four-argument signature so Express recognizes this as error middleware.
+  void next;
+
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
 
   if (process.env.NODE_ENV === "development") {
-    sendErrorDev(err, res);
+    sendErrorDev(err, req, res);
   } else if (process.env.NODE_ENV === "production") {
     let error = { ...err };
     error.message = err.message;
@@ -84,7 +112,7 @@ const errorController = (err, req, res, next) => {
       error = handleJWTExpiredError();
     }
 
-    sendErrorProduction(error, res);
+    sendErrorProduction(error, req, res);
   }
 };
 module.exports = errorController;
