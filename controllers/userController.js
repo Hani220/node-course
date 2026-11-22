@@ -1,20 +1,24 @@
-const fs = require("fs/promises");
 const { fileTypeFromBuffer } = require("file-type");
+const sharp = require("sharp");
 const multer = require("multer");
+const path = require("path");
+
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const factory = require("./handlerFactory.js");
 
-const multerStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/img/users");
-  },
-  filename: (req, file, cb) => {
-    const extension = file.mimetype.split("/")[1];
-    cb(null, `user-${req.user.id}-${Date.now()}.${extension}`);
-  },
-});
+// const multerStorage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "public/img/users");
+//   },
+//   filename: (req, file, cb) => {
+//     const extension = file.mimetype.split("/")[1];
+//     cb(null, `user-${req.user.id}-${Date.now()}.${extension}`);
+//   },
+// });
+
+const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
@@ -32,21 +36,25 @@ const upload = multer({
 
 exports.uploadUserPhoto = upload.single("photo");
 
-exports.validateUserPhoto = catchAsync(async (req, res, next) => {
+exports.resizeAndValidateUserPhoto = catchAsync(async (req, res, next) => {
   if (!req.file) return next();
 
-  const fileBuffer = await fs.readFile(req.file.path);
-  const type = await fileTypeFromBuffer(fileBuffer);
+  const type = await fileTypeFromBuffer(req.file.buffer);
 
   if (!type || !["image/jpeg", "image/png", "image/webp"].includes(type.mime)) {
-    await fs.unlink(req.file.path);
     return next(new AppError("Please upload a valid image", 400));
   }
 
+  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat("jpeg")
+    .jpeg({ quality: 90 })
+    .toFile(path.join("public/img/users", req.file.filename));
+
   next();
 });
-
-exports.uploadUserPhoto = upload.single("photo");
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};

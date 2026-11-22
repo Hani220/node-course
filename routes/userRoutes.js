@@ -18,7 +18,7 @@ Router.get("/me", userController.getMe, userController.getUser);
 Router.patch(
   "/updateMe",
   userController.uploadUserPhoto,
-  userController.validateUserPhoto,
+  userController.resizeAndValidateUserPhoto,
   userController.updateMe,
 );
 Router.delete("/deletMe", userController.deleteMe);
