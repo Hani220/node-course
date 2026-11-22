@@ -32,7 +32,7 @@ const upload = multer({
 
 exports.uploadUserPhoto = upload.single("photo");
 
-exports.validateUserPhoto = async (req, res, next) => {
+exports.validateUserPhoto = catchAsync(async (req, res, next) => {
   if (!req.file) return next();
 
   const fileBuffer = await fs.readFile(req.file.path);
@@ -44,7 +44,7 @@ exports.validateUserPhoto = async (req, res, next) => {
   }
 
   next();
-};
+});
 
 exports.uploadUserPhoto = upload.single("photo");
 
@@ -97,8 +97,6 @@ exports.getMe = (req, res, next) => {
 };
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-  console.log(req.file);
-  console.log(req.body);
   //1) create an error if user posts a passwords data
   if (req.body.password || req.body.passwordConfirm) {
     return next(
@@ -110,6 +108,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   }
   //  filter out unwanted filds names that are not allowed to be updated
   const filterdBody = filterObj(req.body, "name", "email");
+  if (req.file) filterdBody.photo = req.file.filename;
 
   //2) update the user document
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filterdBody, {
